@@ -1,8 +1,8 @@
 require 'logger'
-# TODO use Logs for debugging rather than puts - create logging config and print out debug logs to logfile
-# logger = Logger.new('logs/logfile.log')
-# logger.level = Logger::WARN
-# logger.warn("testing log file")
+
+## Logger Method TODO move to a config
+logger = Logger.new('logs/logfile.log')
+logger.level = Logger::DEBUG
 
 ## Custom Methods
 
@@ -20,40 +20,40 @@ end
 
 Given /I am on the "(.*?)" page/ do |page_name|
   page.find(:xpath, "h1[contains(text(),'" + page_name + "')]")
-  puts('xpath on page matching: ' + page_name)
+  logger.debug('xpath on page matching: ' + page_name)
 end
 
 ## When Section ##
 
 When(/^I see an input field for "(.*?)"$/) do |first_name|
   page.find(:xpath, "input[@name='" + first_name + "']")
-  puts first_name + ' input field is on the page'
+  logger.debug(first_name + ' input field is on the page')
 end
 
 ## Then Section ##
 
 Then /I see a message: "(.*?)"/ do |alert_message|
   page.find('h1', text: alert_message)
-  puts 'The "' + alert_message + '" text is visible on the screen'
+  logger.debug('The "' + alert_message + '" text is visible on the screen')
 end
 
 Then(/^I can select and enter the text: "([^"]*)" into the "(.*?)" input field$/) do |actual_name, first_name|
   page.fill_in(first_name, with: actual_name)
-  puts 'I can enter the text: "' + actual_name + '" into the "' + first_name + '" input field'
+  logger.debug('I can enter the text: "' + actual_name + '" into the "' + first_name + '" input field')
 end
 
 Then(/^I click the button "([^"]*)" "([^"]*)" time\(s\)$/) do |suggest_button, num_of_clicks|
   num = num_of_clicks.to_i
   if num.zero?
-    puts 'The button is not clicked at all'
+    logger.warn('The button is not clicked at all')
   elsif num == 1
     page.click_on(suggest_button)
-    puts 'I clicked the "' + suggest_button + '" button'
+    logger.debug('I clicked the "' + suggest_button + '" button')
   else
     x = 1
     while num.positive?
       page.click_on(suggest_button)
-      puts "I clicked the '" + suggest_button + "' button times #{x} times"
+      logger.debug("I clicked the '" + suggest_button + "' button times #{x} times")
       x += 1
       num -= 1
     end
@@ -64,22 +64,22 @@ Then(/^I see "([^"]*)" result\(s\) listed in the "([^"]*)" table$/) do |num_of_r
   num = num_of_results.to_i
   if num == 1
     a = page.find(:xpath, "strong[contains(text(),'" + results_table + "')]/../following-sibling::div/table/tbody//tr[#{num_of_results}]").text
-    puts 'The single result in the table is: ' + a
+    logger.debug('The single result in the table is: ' + a)
   elsif num > 1
-    puts 'results are printed from bottom up - oldest to most recent'
+    logger.debug('results are printed from bottom up - oldest to most recent')
     while num.positive?
       a = page.find(:xpath, "strong[contains(text(),'" + results_table + "')]/../following-sibling::div/table/tbody//tr[#{num}]").text
-      puts 'The number ' + num.to_s + ' result in the table is: ' + a
+      logger.debug('The number ' + num.to_s + ' result in the table is: ' + a)
       num -= 1
     end
   else
-    puts 'There must be more than 1 result in the table to validate'
+    logger.warn('There must be more than 1 result in the table to validate')
   end
 end
 
 Then(/^I do not see a message: "([^"]*)"$/) do |alert_message|
   if page.assert_no_selector('h1', text: alert_message)
-    puts 'The message: "' + alert_message + '" is not on the screen'
+    logger.debug('The message: "' + alert_message + '" is not on the screen')
   end
 end
 
@@ -89,13 +89,13 @@ Then(/^I can see the "([^"]*)" checkbox and it should be checked = "([^"]*)"$/) 
   b = check_box_name.to_s
   c = should_be_checked.to_s
   if is_checked == should_be_checked
-    puts 'The "' + b + '" checkbox is checked: "' + a + '" which matches what it should be: "' + c + '"'
+    logger.debug('The "' + b + '" checkbox is checked: "' + a + '" which matches what it should be: "' + c + '"')
   else
-    puts 'The "' + b + '" checkbox is checked: "' + a + '" does not match what it should be: "' + c + '"'
+    logger.debug('The "' + b + '" checkbox is checked: "' + a + '" does not match what it should be: "' + c + '"')
     find('input[type="checkbox"]').click
     is_now_checked = page.find(:xpath, "h2[input][contains(text(),'" + b + "')]/input[3]").checked?
     d = is_now_checked.to_s
-    puts 'The "' + b + '" checkbox is now checked: "' + d + '" which matches what it should be: "' + c + '"'
+    logger.debug('The "' + b + '" checkbox is now checked: "' + d + '" which matches what it should be: "' + c + '"')
   end
 end
 
@@ -105,7 +105,7 @@ Then(/^I click the button "([^"]*)" "([^"]*)" times and after each click I watch
   suggestions = []
   if num == 1
     a = clickonceandgetname(suggest_button, results_table, num)
-    puts 'The single result in the table is: ' + a
+    logger.debug('The single result in the table is: ' + a)
   end
   if num > 1
     x = 1
@@ -122,10 +122,10 @@ Then(/^I click the button "([^"]*)" "([^"]*)" times and after each click I watch
   suggestions.each do |suggestion|
     suggestion_list = page.find(:xpath, "strong[contains(text(),'" + results_table + "')]/../following-sibling::div/table/tbody//tr[#{x}]").text
     if suggestion == suggestion_list
-      puts 'list matches suggestion array'
+      logger.debug('list matches suggestion array')
       x -= 1
     else
-      puts 'list doesn\'t match'
+      logger.warn('list doesn\'t match')
     end
   end
 end
